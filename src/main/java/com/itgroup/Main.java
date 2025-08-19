@@ -9,9 +9,14 @@ public class Main {
         Scanner scan = new Scanner(System.in);
         memberManager manager = new memberManager();
 
+//        String id;
+//        String name;
+//        String pw
+//        String gender
+//        String birth, String marriage, int salary, String address, String manager
         while (true){
             System.out.println("메뉴 선택");
-            System.out.println("0: 종료, 1:목록조회, 2:가입, 3:수정, 4:총 회원수, 5:탈퇴, 6:회원정보, 7:xx, 8:xx");
+            System.out.println("0: 종료, 1:목록조회, 2:가입, 3:수정, 4:총 회원수, 5:탈퇴, 6:회원정보, 7:성별조회, 8:상세보기");
             int menu = scan.nextInt(); // 선택한 메뉴
             switch (menu) {
                 case 0 : // 종료
@@ -22,6 +27,7 @@ public class Main {
                     manager.selectAll();
                     break;
                 case 2 : // 가입
+                    manager.insertInfo();
                     break;
                 case 3 : // 수정
                     break;
@@ -29,12 +35,15 @@ public class Main {
                     manager.getSize();
                     break;
                 case 5 : // 탈퇴
+                    manager.deleteInfo();
                     break;
                 case 6 : // 회원정보
                     break;
                 case 7 : //
+                    manager.findByGender();
                     break;
                 case 8 : //
+                    manager.getMemberOne();
                     break;
             }
 
