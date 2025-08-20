@@ -8,16 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 // 데이터 베이스와 직접 연동하여 CRUD 작업을 수행해주는 DAO 클래스
-public class MemberDao {
+public class MemberDao extends SuperDao {
     public MemberDao() {
-        String driver = "oracle.jdbc.driver.OracleDriver";
-        try {
-            Class.forName(driver);
-
-        } catch (ClassNotFoundException e) {
-            System.out.println("해당 드라이브가 존재하지 않습니다.");
-            e.printStackTrace();
-        }
+        super();
     }
 
     public Connection getConnection() {
@@ -181,7 +174,7 @@ public class MemberDao {
                 bean.setName(rs.getString(("name")));
                 bean.setPassword(rs.getString(("password")));
                 bean.setGender(rs.getString(("gender")));
-                bean.setBirth(rs.getString(("birth")));
+                bean.setBirth(String.valueOf(rs.getDate(("birth"))));
                 bean.setMerriage(rs.getString(("marriage")));
                 bean.setSalary(rs.getInt(("salary")));
                 bean.setAddress(rs.getString(("address")));
@@ -204,44 +197,40 @@ public class MemberDao {
         return bean;
     }
 
-    public Member inserInfo(String id, String name, String pw, String gender,String birth, String marriage, int salary, String address, String manager) {
+    public int insertInfo(Member bean) {
         Connection conn = null;
         PreparedStatement pstmt = null;
         int rs = 0;
-        Member bean = null;
 
         //INSERT INTO MEMBERS VALUES ('miyeon','미연','abc1234','여자','90/12/25','미혼',200,'인천','yusin')
-        String sql =  "INSERT INTO MEMBERS VALUES (?,?,?,?,?,?,?,?,?)";
+        String sql =  "INSERT INTO MEMBERS(id,name,password,gender,birth,marriage,salary,address,manager)";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?)";
+
         try {
+            bean = new Member();
             conn = this.getConnection();
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1,id);
-            pstmt.setString(2,name);
-            pstmt.setString(3,pw);
-            pstmt.setString(4,gender);
-            pstmt.setString(5,birth);
-            pstmt.setString(6,marriage);
-            pstmt.setInt(7,salary);
-            pstmt.setString(8,address);
-            pstmt.setString(9,manager);
+            pstmt.setString(1,bean.getId());
+            pstmt.setString(2,bean.getName());
+            pstmt.setString(3,bean.getPassword());
+            pstmt.setString(4,bean.getGender());
+            pstmt.setString(5,bean.getBirth());
+            pstmt.setString(6,bean.getMerriage());
+            pstmt.setInt(7,bean.getSalary());
+            pstmt.setString(8,bean.getAddress());
+            pstmt.setString(9,bean.getManager());
+
             rs = pstmt.executeUpdate();
 
-            if(rs > 0){ // 1건 발견됨.
-                bean = new Member();
-                bean.setId(id);
-                bean.setName(name);
-                bean.setPassword(pw);
-                bean.setGender(gender);
-                bean.setBirth(birth);
-                bean.setMerriage(marriage);
-                bean.setSalary(salary);
-                bean.setAddress(address);
-                bean.setManager(manager);
-            }
             conn.commit();
         }
         catch (SQLException e) {
             e.printStackTrace();
+            try{
+                conn.rollback();
+            }catch (Exception e2){
+                e2.printStackTrace();
+            }
         }finally {
             try {
                 if (pstmt != null) {pstmt.close();}
@@ -255,10 +244,9 @@ public class MemberDao {
                 }
                 e.printStackTrace();
             }
-        }
-
-        return bean;
+        }return rs;
     }
+
 
     public int deleteInfo(String id) {
         Connection conn = null;
@@ -290,6 +278,50 @@ public class MemberDao {
             }
         }
 
+        return cnt;
+    }
+
+    public int updateInfo(Member bean) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int cnt = -1;
+
+        String sql = "update members set name = ?, password = ?, gender = ?, birth = ?, marriage = ?, salary = ?, address = ?, manager = ?";
+        sql += " where id = ?";
+
+        try {
+            conn = this.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,bean.getName());
+            pstmt.setString(2,bean.getPassword());
+            pstmt.setString(3,bean.getGender());
+            pstmt.setString(4,bean.getBirth());
+            pstmt.setString(5,bean.getMerriage());
+            pstmt.setInt(6,bean.getSalary());
+            pstmt.setString(7,bean.getAddress());
+            pstmt.setString(8,bean.getManager());
+            pstmt.setString(9,bean.getId());
+
+            cnt = pstmt.executeUpdate();
+
+            conn.commit();
+
+        } catch (Exception ex) {
+            try{
+                conn.rollback(); // 수행 실패 시 롤백
+            } catch (Exception ex2) {
+                ex2.printStackTrace();
+            }
+            ex.printStackTrace();
+        }finally {
+            try {
+                if (pstmt != null) {pstmt.close();}
+                if (conn != null) {conn.close();}
+            }
+            catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }
         return cnt;
     }
 }

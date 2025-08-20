@@ -1,25 +1,29 @@
 package com.itgroup;
 
+import com.itgroup.bean.Board;
 import com.itgroup.bean.Member;
+import com.itgroup.dao.BoardDao;
 import com.itgroup.dao.MemberDao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
 // 메인클래스 대신 실제 모든 업무를 총 책임지는 클래스
-public class memberManager {
-    private MemberDao dao = null; // 실제 데이터 베이스와 연동하는 dao
+public class DataManager {
 
-    public memberManager() {
-        this.dao = new MemberDao();
+
+    private BoardDao bdao = null;
+    private MemberDao mdao = null; // 실제 데이터 베이스와 연동하는 mdao
+    private Scanner scan = null;
+
+    public DataManager() {
+        this.mdao = new MemberDao();
+        this.bdao = new BoardDao();
+        this.scan = new Scanner(System.in);
     }
 
     public void selectAll() { // 모든 회원 정보 조회.
-        List<Member> members = dao.selectAll();
+        List<Member> members = mdao.selectAll();
         for (Member member : members){
             String msg = "=============================\n"+
                     "ID : " + member.getId() + "\n" +
@@ -37,7 +41,7 @@ public class memberManager {
 
     public void getSize() { // 몇 명의 회원인지 조회하는 구문.
 
-        int cnt = dao.getSize();
+        int cnt = mdao.getSize();
         String message;
         if (cnt == 0) {
             message = "검색된 회원이 존재하지 않습니다.";
@@ -52,7 +56,7 @@ public class memberManager {
         System.out.println("찾으시는 성별을 \'여자\' 또는 \'남자\'로 입력해주세요.");
         String findGender = scan.nextLine();
 
-        List <Member> member = dao.findByGender(findGender);
+        List <Member> member = mdao.findByGender(findGender);
         if (member == null){
             System.out.println("찾으시는 회원이 존재하지 않습니다.");
         } else{
@@ -75,7 +79,7 @@ public class memberManager {
         Scanner scan = new Scanner(System.in);
         System.out.println("찾으시는 회원의 ID를 입력해주세요.");
         String findId = scan.nextLine();
-        Member member = dao.getMembersOne(findId);
+        Member member = mdao.getMembersOne(findId);
         if (member == null){
             System.out.println("찾으시는 회원이 존재하지 않습니다.");
         } else{
@@ -93,70 +97,34 @@ public class memberManager {
     }
 
     public void insertInfo() {
-        Scanner scan = new Scanner(System.in);
-        System.out.println("가입정보를 입력해주세요\n사용할 id : ");
-        String id = "";
-        String name = "";
-        String pw = "";
-        String gender = "";
-        String birth = "";
-        String marriage = "";
-        int salary = 0;
-        String address = "";
-        String mnger = "";
+        Member bean = new Member();
+        int cnt = -1;
 
-        Member member = new Member(id , name, pw, gender, birth, marriage, salary, address, mnger);
+        System.out.println("ID를 입력해주세요. ID : ");
+        String id = scan.next();
 
-        id = scan.next();
+        System.out.println("이름을 입력해주세요 : 이름");
+        String name = scan.next();
 
-        if (id.length()<5){
-            System.out.println("ID가 너무 짧습니다");
-        } else {
-            member.setId(id);
-            System.out.print("이름 : ");
-            name = scan.next();
+        bean.setId(id);
+        bean.setName(name);
+        bean.setPassword("abc123");
+        bean.setGender("남자");
+        bean.setBirth("90/12/25");
+        bean.setMerriage("결혼");
+        bean.setSalary(200);
+        bean.setAddress("강남");
+        bean.setManager("");
 
-            if (name.length()<1){
-                System.out.println("기입한 정보가 올바르지 않습니다.");
-            } else {
-                member.setName(name);
-                System.out.print("비밀번호 : ");
-                pw = scan.next();
-                member.setPassword(pw);
-                System.out.print("성별 : ");
-                gender = scan.next();
-                if (gender != "남자" && gender != "여자"){
-                    System.out.println("정보가 올바르지 않습니다.");
-                } else {
-                    member.setGender(gender);
-                    System.out.print("생년월일(yy/mm/dd형식으로 기입) : ");
-                    birth = scan.next();
-                    member.setBirth(birth);
-                    System.out.print("결혼여부(결혼/미혼/이혼 중 선택하여 작성) : ");
-                    marriage = scan.next();
-                    if (marriage != "결혼" && marriage != "이혼" && marriage != "미혼"){
-                        System.out.println("정보가 올바르지 않습니다.");
-                    } else {
-                        member.setMerriage(marriage);
-                        System.out.print("급여 : ");
-                        salary = scan.nextInt();
-                        member.setSalary(salary);
-                        System.out.print("거주지 : ");
-                        address = scan.next();
-                        member.setAddress(address);
-                        System.out.print("담당자 : ");
-                        mnger = scan.next();
-                        member.setManager(mnger);
-                    }
-                }
-            }
-        }
 
-        member = dao.inserInfo(id , name, pw, gender, birth, marriage, salary, address, mnger);
-        if (member != null){
-            System.out.println("회원가입에 성공했습니다.");
-        } else{
-            System.out.println("회원가입에 실패했습니다.");
+        cnt = mdao.insertInfo(bean);
+
+        if (cnt == -1){
+            System.out.println("회원 가입에 실패하였습니다.");
+        } else if (cnt == 0) {
+            System.out.println("해당 회원이 존재하지 않습니다.");
+        } else if(cnt > 0) {
+            System.out.println("회원 가입에 성공하였습니다.");
         }
     }
 
@@ -165,7 +133,7 @@ public class memberManager {
         System.out.println("탈퇴할 ID를 기입해주세요.");
         String id = scan.nextLine();
         int cnt = -1;
-        cnt = dao.deleteInfo(id);
+        cnt = mdao.deleteInfo(id);
         if (cnt == -1){
             System.out.println("회원 탈퇴에 실패하였습니다.");
         } else if (cnt == 0) {
@@ -175,4 +143,65 @@ public class memberManager {
         }
 
     }
+
+    public void updateData() {
+        int cnt = -1;
+
+        System.out.println("수정할 회원의 ID를 입력해주세요.");
+        String findId = scan.next(); // yusin 입력
+
+        // 여기서의 bean은 이전에 입력했던 나의 정보
+        Member bean = mdao.getMembersOne(findId);
+
+        // 편의상 내 이름과 결혼 여부를 변경
+        System.out.println("이름 입력 : ");
+        String name = scan.next();
+
+        System.out.println("결혼 여부 입력 : ");
+        String merriage = scan.next();
+
+        bean.setName(name);
+        bean.setManager(merriage);
+        cnt = mdao.updateInfo(bean);
+        if (cnt == -1){
+            System.out.println("회원 정보 수정에 실패하였습니다.");
+        } else if (cnt == 0) {
+            System.out.println("해당 회원이 존재하지 않습니다.");
+        } else if(cnt > 0) {
+            System.out.println("회원 정보 수정에 성공하였습니다.");
+        }
+    }
+
+    public void selectAllBoard() {
+        List<Board> boards = bdao.selectAll();
+
+        for (Board board : boards){
+            String msg = "=============================\n"+
+                    "글번호 : " + board.getNo() + "\n" +
+                    "작성자 : " + board.getWriter() + "\n" +
+                    "비밀번호 : " + board.getPassword() + "\n" +
+                    "제목 : " + board.getSubject() + "\n" +
+                    "내용 : " + board.getContent() + "\n" +
+                    "조회수 : " + board.getReadHit() + "\n" +
+                    "작성일 : " + board.getRegDate() + "\n";
+            System.out.println(msg);
+        }
+    }
+
+    public void selectEvenData() {
+        List<Board> boards = bdao.selectEvenData();
+        for (Board board : boards){
+            String msg = "=============================\n"+
+                    "글번호 : " + board.getNo() + "\n" +
+                    "작성자 : " + board.getWriter() + "\n" +
+                    "비밀번호 : " + board.getPassword() + "\n" +
+                    "제목 : " + board.getSubject() + "\n" +
+                    "내용 : " + board.getContent() + "\n" +
+                    "조회수 : " + board.getReadHit() + "\n" +
+                    "작성일 : " + board.getRegDate() + "\n";
+            System.out.println(msg);
+        }
+    }
+
+
 }
